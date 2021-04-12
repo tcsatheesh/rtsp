@@ -216,10 +216,10 @@ def main(args):
     
     source.set_property('sensor_id', 0)
     source.set_property('bufapi-version', 1)
-    streammux.set_property('width', 1280)
-    streammux.set_property('height', 720)
+    streammux.set_property('width', args.width)
+    streammux.set_property('height', args.height)
     streammux.set_property('batch-size', 1)
-    streammux.set_property('batched-push-timeout', 4000000)
+    streammux.set_property('batched-push-timeout', args.bitrate)
         
     print("Adding elements to Pipeline \n")
     pipeline.add(source)
