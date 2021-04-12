@@ -115,7 +115,7 @@ def osd_sink_pad_buffer_probe(pad,info,u_data):
         # set(red, green, blue, alpha); set to Black
         py_nvosd_text_params.text_bg_clr.set(0.0, 0.0, 0.0, 1.0)
         # Using pyds.get_string() to get display_text as string
-        print(pyds.get_string(py_nvosd_text_params.display_text))
+        # print(pyds.get_string(py_nvosd_text_params.display_text))
         pyds.nvds_add_display_meta_to_frame(frame_meta, display_meta)
         try:
             l_frame=l_frame.next
@@ -145,7 +145,8 @@ def main(args):
 
    # Create a caps filter
     caps0 = Gst.ElementFactory.make("capsfilter", "filter0")
-    caps0.set_property("caps", Gst.Caps.from_string("video/x-raw(memory:NVMM),width=1280, height=720, framerate=21/1, format=NV12"))
+    caps0_string = "video/x-raw(memory:NVMM),width=%d, height=%d, framerate=%d/1, format=NV12" % (args.width, args.height, args.framerate)
+    caps0.set_property("caps", Gst.Caps.from_string(caps0_string))
         
     # Create nvstreammux instance to form batches from one or more sources.
     streammux = Gst.ElementFactory.make("nvstreammux", "Stream-muxer")
@@ -278,9 +279,10 @@ def main(args):
     factory = GstRtspServer.RTSPMediaFactory.new()
     factory.set_launch( "( udpsrc name=pay0 port=%d buffer-size=524288 caps=\"application/x-rtp, media=video, clock-rate=90000, encoding-name=(string)%s, payload=96 \" )" % (updsink_port_num, args.codec))
     factory.set_shared(True)
-    server.get_mount_points().add_factory("/ds-test", factory)
+    factory_endpoint = "/test"
+    server.get_mount_points().add_factory(factory_endpoint, factory)
     
-    print("\n *** DeepStream: Launched RTSP Streaming at rtsp://localhost:%d/ds-test ***\n\n" % rtsp_port_num)
+    print("\n *** DeepStream: Launched RTSP Streaming at rtsp://localhost:%d%s ***\n\n" % (rtsp_port_num, factory_endpoint))
     
     # Lets add probe to get informed of the meta data generated, we add probe to
     # the sink pad of the osd element, since by that time, the buffer would have
@@ -311,6 +313,12 @@ def parse_args():
                   help="RTSP Streaming Codec H264/H265 , default=H264", choices=['H264','H265'])
     parser.add_argument("-b", "--bitrate", default=4000000,
                   help="Set the encoding bitrate ", type=int)
+    parser.add_argument("-t", "--height", default=720, 
+		  help="Set the height of the video.", type=int)
+    parser.add_argument("-w", "--width", default=1280, 
+		  help="Set the width of the video.", type=int)
+    parser.add_argument("-f", "--framerate", default=28, 
+		  help="Set the framerate of the video.", type=int)
     parser.set_defaults(with_dl=False)
     args = parser.parse_args()
     return args
